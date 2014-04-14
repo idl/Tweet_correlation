@@ -6,6 +6,7 @@ import ast
 import time
 import sys
 from operator import itemgetter
+from shapely.wkb import loads
 
 
 def check_contains(shape_f,lon1,lat1,poly_name):
@@ -16,21 +17,17 @@ def check_contains(shape_f,lon1,lat1,poly_name):
   except Exception as e:
     print e.msg()
 
-
-  polyfeat = polylr.GetNextFeature()
-
   point_geom = ogr.Geometry(ogr.wkbPoint)
   point_geom.SetPoint_2D(0, float(lon1),float(lat1))
 
   pt_poly = []
-  while polyfeat:
-    poly_name = polyfeat.GetField(poly_name)
+  for feature in polylr:
+    polyfeat = polylr.GetNextFeature()
     poly_geom = polyfeat.GetGeometryRef()
-    if poly_geom.contains(point_geom):
-      pt_poly.append([[lon1,lat1],poly_name])
-    polyfeat.Destroy()
-    polyfeat = linelyr.GetNextFeature()
-
+    if poly_geom.Contains(point_geom):
+      poly_name = polyfeat.GetField(poly_name)
+      pt_poly = [[lon1,lat1],poly_name]
+      return pt_poly
   return pt_poly
 
 def process_distance(dp_data):
@@ -42,7 +39,6 @@ def process_distance(dp_data):
 
     if pt_poly != []:
       dp_data['poly_name'] = pt_poly[1]
-
     return dp_data
   except:
     pass
@@ -84,6 +80,7 @@ def main():
     exit(0)
 
   pool = Pool(processes=cpu_count())
+
 
   idata = read_input(str(sys.argv[1]),str(sys.argv[2]),str(sys.argv[3]))
 
