@@ -27,7 +27,6 @@ class GnipDataProcessor(object):
                 gfile.close()
             except:
                 pass
-        #self.output_file.close()
 
     def process_line(self, line):
         try:
