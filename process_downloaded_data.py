@@ -9,7 +9,7 @@ class GnipDataProcessor(object):
         self.output_file = csv.writer(open(os.path.join(self.path, o_file), 'w+'))
         self.chunk = []
         self.chunk_size = chunk_size
-        self.output_file.writerow(['id','longitude','latitude','tweet','created_at','user'])
+        self.output_file.writerow(['id','geo','tweet','created_at','user'])
 
     def all_files(self):
         for path, dirs, files in os.walk(self.path):
@@ -46,13 +46,12 @@ class GnipDataProcessor(object):
         for item in self.chunk:
             if 'geo' in item:
                 tw_id = item['id']
-                longitude = item['geo']['coordinates'][1]
-                latitude = item['geo']['coordinates'][0]
+                geo = ", ".join([str(i) for i in item['geo']['coordinates']])
                 tweet = item['body']
                 created_at = item['postedTime']
                 user = item['actor']['preferredUsername']
                 try:
-                    row = [tw_id,longitude,latitude,tweet,created_at,user]
+                    row = [tw_id,geo,tweet,created_at,user]
                     self.output_file.writerow([unicode(s).encode("utf-8") for s in row])
                 except:
                     print "issue writing"
