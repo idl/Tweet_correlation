@@ -1,21 +1,33 @@
-import os
+import os,sys
 import gzip, json
-import requests
+import csv
 
 class GnipDataProcessor(object):
 
-    def __init__(self, path, chunk_size=50):
-        self.path = path
+    def __init__(self, i_path, o_file, chunk_size=50):
+        self.path = i_path
+        self.output_file = csv.writer(open(os.path.join(self.path, o_file), 'w+'))
         self.chunk = []
         self.chunk_size = chunk_size
+        self.output_file.writerow(['id','longitude','latitude','tweet','created_at','user'])
 
     def all_files(self):
         for path, dirs, files in os.walk(self.path):
             for f in files:
                 yield os.path.join(path, f)
 
-    def process_chunk(self):
-        raise NotImplementedError
+    def iter_files(self):
+        file_generator = self.all_files()
+
+        for f in file_generator:
+            try:
+                gfile = gzip.open('./'+f)
+                for line in gfile:
+                    self.process_line(line)
+                gfile.close()
+            except:
+                pass
+        #self.output_file.close()
 
     def process_line(self, line):
         try:
@@ -30,35 +42,29 @@ class GnipDataProcessor(object):
             print line
             raise
 
-    def iter_files(self):
-        self.output_file = open(os.path.join(self.path, 'output.txt'), 'w+')
-        file_generator = self.all_files()
-
-        for f in file_generator:
-            gfile = gzip.open('./'+f)
-            for line in gfile:
-                self.process_line(line)
-            gfile.close()
-        self.output_file.close()
-
-# class SMTASGnipDataProcessor(GnipDataProcessor):
-#     def process_chunk(self):
-#         url = "http://localhost:8000/drivers/gnip/"
-#         r = requests.post(url, data={"data" : json.dumps(chunk)})
-
-# smtas = SMTASGnipDataProcessor('./hurricane2012', chunk_size=100)
-# smtas.iter_files()
-
-class GeoCSVGnipDataProcessor(GnipDataProcessor):
     def process_chunk(self):
         # this is where we process the loaded json and write to a csv
         for item in self.chunk:
             if 'geo' in item:
-                posted_time = item['postedTime']
-                geo = ", ".join([str(i) for i in item['geo']['coordinates']])
-                self.output_file.write("%s\t%s\n" % (posted_time, geo))
-
+                tw_id = item['id']
+                longitude = item['geo']['coordinates'][1]
+                latitude = item['geo']['coordinates'][0]
+                tweet = item['body']
+                created_at = item['postedTime']
+                user = item['actor']['preferredUsername']
+                try:
+                    row = [tw_id,longitude,latitude,tweet,created_at,user]
+                    self.output_file.writerow([unicode(s).encode("utf-8") for s in row])
+                except:
+                    print "issue writing"
 
 if __name__ == '__main__':
-    csv = GeoCSVGnipDataProcessor('./spanish_march/', chunk_size=50)
+    total = len(sys.argv)
+
+    if total < 2:
+        print "Utilization: python process_downloaded_data.py <input_dir> <output_file>"
+        exit(0)
+
+    #csv = GeoCSVGnipDataProcessor(str(sys.argv[1]),str(sys.argv[2]), chunk_size=50)
+    csv = GnipDataProcessor(str(sys.argv[1]),str(sys.argv[2]), chunk_size=5)
     csv.iter_files()
