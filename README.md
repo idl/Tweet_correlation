@@ -8,6 +8,17 @@ Utilizes OGR/GDAL to check if a geo-coded tweet is contained within a polygon. T
 
 ## Utilization
 
+### Processing downloaded data (json,targz)
+```
+python process_downloaded_data.py <input_dir> <output_csv_file>
+```
+Example: The test data consists of spanish tweets from US
+```
+python process_downloaded_data.py ./Example_data_spanish/ output.csv
+```
+
+
+### Input csv to spatial correlation
 ```
 python apply_polygon.py <shape_file> <shape_output_field> <input_csv_file> <output_csv_file>
 ```
