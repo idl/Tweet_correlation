@@ -65,6 +65,5 @@ if __name__ == '__main__':
         print "Utilization: python process_downloaded_data.py <input_dir> <output_file>"
         exit(0)
 
-    #csv = GeoCSVGnipDataProcessor(str(sys.argv[1]),str(sys.argv[2]), chunk_size=50)
-    csv = GnipDataProcessor(str(sys.argv[1]),str(sys.argv[2]), chunk_size=5)
+    csv = GnipDataProcessor(str(sys.argv[1]),str(sys.argv[2]), chunk_size=50)
     csv.iter_files()
