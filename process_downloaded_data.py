@@ -27,6 +27,9 @@ class GnipDataProcessor(object):
                 gfile.close()
             except:
                 pass
+        if self.chunk != []:
+            self.process_chunk()
+
 
     def process_line(self, line):
         try:
