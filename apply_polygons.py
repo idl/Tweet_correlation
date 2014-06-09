@@ -39,6 +39,8 @@ def process_distance(dp_data):
 
     if pt_poly != []:
       dp_data['poly_name'] = pt_poly[1]
+
+
     return dp_data
   except:
     pass
