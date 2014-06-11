@@ -12,22 +12,27 @@ from pymongo import MongoClient
 from math import radians, cos, sin, asin, sqrt
 from random import choice
 import numpy
+import shapefile
+from rtree import index
+from shapely.geometry import Polygon, Point
 
 # Global
-features = []
+idx = index.Index()
+polygons = []
 
 def extract_features(shape_f):
-  global features
-  driver = ogr.GetDriverByName('ESRI Shapefile')
-  try:
-    polyshp = driver.Open(shape_f, 0)
-    polylr = polyshp.GetLayer()
+  global idx
+  global polygons
 
-    for feature in polylr:
-      polyfeat = polylr.GetNextFeature()
-      features.append(polyfeat)
-  except Exception as e:
-    print e
+  polygons_sf = shapefile.Reader(shape_f)
+  polygon_shapes = polygons_sf.shapes()
+  polygon_points = [q.points for q in polygon_shapes ]
+  polygons = [Polygon(q) for q in polygon_points]
+
+  count = -1
+  for q in polygon_shapes:
+    count +=1
+    idx.insert(count, q.bbox)
   print "Shapefile Features Extracted"
 
 def check_contains1(dp_data):
@@ -37,49 +42,33 @@ def check_contains1(dp_data):
   shape_f = dp_data['shp_file']
   poly_name = dp_data['poly_name']
 
-  point_geom = ogr.Geometry(ogr.wkbPoint)
-  point_geom.SetPoint_2D(0, float(lon),float(lat))
-
+  # point_geom = ogr.Geometry(ogr.wkbPoint)
+  # point_geom.SetPoint_2D(0, float(lon),float(lat))
+  point_coord = [float(lon),float(lat)]
+  point_geom = Point(float(lon),float(lat))
   
-  for feature in features:
-    f = feature.GetGeometryRef()
-    if f.Contains(point_geom):
-      poly_name = feature.GetField(poly_name)
-      dp_data['result']['poly_name'] = str(poly_name)
-      #print dp_data
-      return dp_data
-  print "Unable to Corelate"
+  for j in idx.intersection(point_coord):
+    #  print polygons[j]
+    try:
+      print "here ", point_geom.within(polygons[j])
+    except Exception as e:
+      print "error", e
+    if point_geom.within(polygons[j]):
+      print "here"
+
+    break
+
+  # for feature in features:
+  #   f = feature.GetGeometryRef()
+  #   if f.Contains(point_geom):
+  #     poly_name = feature.GetField(poly_name)
+  #     dp_data['result']['poly_name'] = str(poly_name)
+  #     #print dp_data
+  #     return dp_data
+  # print "Unable to Corelate"
   return None
 
 
-def check_contains(dp_data):
-  mongo_id = dp_data['result']['id']
-  lat = dp_data['result']['latitude']
-  lon = dp_data['result']['longitude']
-  shape_f = dp_data['shp_file']
-  poly_name = dp_data['poly_name']
-
-  driver = ogr.GetDriverByName('ESRI Shapefile')
-  try:
-    polyshp = driver.Open(shape_f, 0)
-    polylr = polyshp.GetLayer()
-  except Exception as e:
-    print e.msg()
-
-  point_geom = ogr.Geometry(ogr.wkbPoint)
-  point_geom.SetPoint_2D(0, float(lon),float(lat))
-
-  pt_poly = []
-  for feature in polylr:
-    polyfeat = polylr.GetNextFeature()
-    poly_geom = polyfeat.GetGeometryRef()
-    if poly_geom.Contains(point_geom):
-      poly_name = polyfeat.GetField(poly_name)
-      pt_poly = [[lon,lat],poly_name]
-      #print pt_poly
-      return pt_poly
-  print pt_poly
-  return pt_poly
 
 def get_poly_centroid(coordinates):
     from shapely.geometry import Polygon, Point
@@ -169,21 +158,23 @@ def main():
     dp_data['poly_name'] = str(sys.argv[6])
     idata.append(dp_data)
     count += 1
-    if count % 500 == 0:
-        responses = pool.imap_unordered(check_contains1, idata)
+    #if count % 5 == 0:
+    if count:
+        #responses = pool.imap_unordered(check_contains1, idata)
+        check_contains1(dp_data)
         num_tasks = len(idata)
         start_time = time.time()
-        while (True):
-          completed = responses._index
-          if (completed == num_tasks): break
-          percent = (float(completed)/float(num_tasks))*100
-          print "%.3f" % percent," % complete. ", "Waiting for", num_tasks-completed, "tasks to complete..."
-          time.sleep(2)
+        # while (True):
+        #   completed = responses._index
+        #   if (completed == num_tasks): break
+        #   percent = (float(completed)/float(num_tasks))*100
+        #   print "%.3f" % percent," % complete. ", "Waiting for", num_tasks-completed, "tasks to complete..."
+        #   time.sleep(2)
         idata = []
         end_time = time.time()
         print "total time taken this loop: ", end_time - start_time
         print "Found and wrote: %d" % count
-  
+    break
   pool.close()
 
 
