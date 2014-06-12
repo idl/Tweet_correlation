@@ -1,5 +1,4 @@
 from multiprocessing import Process, Queue, Pool, cpu_count
-from osgeo import ogr
 import json
 import csv
 import ast
@@ -42,36 +41,18 @@ def check_contains1(dp_data):
   shape_f = dp_data['shp_file']
   poly_name = dp_data['poly_name']
 
-  # point_geom = ogr.Geometry(ogr.wkbPoint)
-  # point_geom.SetPoint_2D(0, float(lon),float(lat))
   point_coord = [float(lon),float(lat)]
   point_geom = Point(float(lon),float(lat))
   
   for j in idx.intersection(point_coord):
-    #  print polygons[j]
-    try:
-      print "here ", point_geom.within(polygons[j])
-    except Exception as e:
-      print "error", e
     if point_geom.within(polygons[j]):
       print "here"
 
-    break
-
-  # for feature in features:
-  #   f = feature.GetGeometryRef()
-  #   if f.Contains(point_geom):
-  #     poly_name = feature.GetField(poly_name)
-  #     dp_data['result']['poly_name'] = str(poly_name)
-  #     #print dp_data
-  #     return dp_data
-  # print "Unable to Corelate"
   return None
 
 
 
 def get_poly_centroid(coordinates):
-    from shapely.geometry import Polygon, Point
     poly_list = []
     
     for each in coordinates[0]:
@@ -158,23 +139,21 @@ def main():
     dp_data['poly_name'] = str(sys.argv[6])
     idata.append(dp_data)
     count += 1
-    #if count % 5 == 0:
-    if count:
-        #responses = pool.imap_unordered(check_contains1, idata)
-        check_contains1(dp_data)
+    if count % 500 == 0:
+  
+        responses = pool.imap_unordered(check_contains1, idata)
         num_tasks = len(idata)
         start_time = time.time()
-        # while (True):
-        #   completed = responses._index
-        #   if (completed == num_tasks): break
-        #   percent = (float(completed)/float(num_tasks))*100
-        #   print "%.3f" % percent," % complete. ", "Waiting for", num_tasks-completed, "tasks to complete..."
-        #   time.sleep(2)
+        while (True):
+          completed = responses._index
+          if (completed == num_tasks): break
+          percent = (float(completed)/float(num_tasks))*100
+          print "%.3f" % percent," % complete. ", "Waiting for", num_tasks-completed, "tasks to complete..."
+          time.sleep(2)
         idata = []
         end_time = time.time()
         print "total time taken this loop: ", end_time - start_time
         print "Found and wrote: %d" % count
-    break
   pool.close()
 
 
