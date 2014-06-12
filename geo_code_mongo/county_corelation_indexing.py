@@ -18,14 +18,24 @@ from shapely.geometry import Polygon, Point
 # Global
 idx = index.Index()
 polygons = []
+polygon_features = []
+
 
 def extract_features(shape_f):
   global idx
-  global polygons
-
+  global polygons, polygon_features
   polygons_sf = shapefile.Reader(shape_f)
   polygon_shapes = polygons_sf.shapes()
   polygon_points = [q.points for q in polygon_shapes ]
+  
+
+  polygon_fields = {}
+  for ind, each in enumerate(polygons_sf.fields):
+    polygon_fields[each[0]] = ind
+
+  print polygon_fields
+  
+  polygon_features = [(f[polygon_fields['geoid10']], f[polygon_fields['namelsad10']]) for f in polygons_sf.records()]
   polygons = [Polygon(q) for q in polygon_points]
 
   count = -1
@@ -46,8 +56,7 @@ def check_contains1(dp_data):
   
   for j in idx.intersection(point_coord):
     if point_geom.within(polygons[j]):
-      print "here"
-
+      print point_geom, polygon_features[j]
   return None
 
 
@@ -126,6 +135,8 @@ def main():
   conn = mongo_host(mongo_db)
 
   extract_features(str(sys.argv[5]))
+
+
 
   pool = Pool(processes=cpu_count())
 
