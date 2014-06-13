@@ -31,10 +31,10 @@ def extract_features(shape_f):
 
   polygon_fields = {}
   for ind, each in enumerate(polygons_sf.fields):
-    polygon_fields[each[0]] = ind
+    polygon_fields[each[0]] = ind -1 
 
   print polygon_fields
-  
+
   polygon_features = [(f[polygon_fields['geoid10']], f[polygon_fields['namelsad10']]) for f in polygons_sf.records()]
   polygons = [Polygon(q) for q in polygon_points]
 
@@ -45,18 +45,21 @@ def extract_features(shape_f):
   print "Shapefile Features Extracted"
 
 def check_contains1(dp_data):
-  mongo_id = dp_data['result']['id']
+  # mongo_id = dp_data['result']['id']
   lat = dp_data['result']['latitude']
   lon = dp_data['result']['longitude']
-  shape_f = dp_data['shp_file']
-  poly_name = dp_data['poly_name']
+  # shape_f = dp_data['shp_file']
+  # poly_name = dp_data['poly_name']
 
   point_coord = [float(lon),float(lat)]
   point_geom = Point(float(lon),float(lat))
   
   for j in idx.intersection(point_coord):
     if point_geom.within(polygons[j]):
-      print point_geom, polygon_features[j]
+      dp_data['polygon_features'] = polygon_features[j]
+      # update mongo record
+      # dp_data['mongodb_conn'].update({"id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
+      return dp_data
   return None
 
 
@@ -136,8 +139,6 @@ def main():
 
   extract_features(str(sys.argv[5]))
 
-
-
   pool = Pool(processes=cpu_count())
 
   count = 1
@@ -145,6 +146,7 @@ def main():
   idata = []
   for result in conn.get_data():
     dp_data = {}
+    dp_data['mongodb_conn'] = conn
     dp_data['result'] = result
     dp_data['shp_file'] = str(sys.argv[5])
     dp_data['poly_name'] = str(sys.argv[6])
