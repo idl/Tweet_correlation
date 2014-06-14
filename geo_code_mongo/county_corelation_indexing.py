@@ -58,7 +58,7 @@ def check_contains1(dp_data):
     if point_geom.within(polygons[j]):
       dp_data['polygon_features'] = polygon_features[j]
       # update mongo record
-      # dp_data['mongodb_conn'].update({"id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
+      # dp_data['mongodb_conn'].update({"_id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
       return dp_data
   return None
 
@@ -111,7 +111,7 @@ class mongo_host(object):
                   poly_coordinates = doc['place']['bounding_box']['coordinates']
                   centroid = get_poly_centroid(poly_coordinates)
                   result = {
-                      'id' : doc['_id'],
+                      'id' : doc['id'],
                       'latitude' : centroid.x,
                       'longitude' : centroid.y,
                       'type' : 'Polygon'
