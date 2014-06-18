@@ -153,7 +153,6 @@ def main():
     idata.append(dp_data)
     count += 1
     if count % 500 == 0:
-  
         responses = pool.imap_unordered(check_contains1, idata)
         num_tasks = len(idata)
         start_time = time.time()
