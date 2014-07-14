@@ -35,7 +35,7 @@ def extract_features(shape_f):
 
   print polygon_fields
 
-  polygon_features = [(f[polygon_fields['geoid10']], f[polygon_fields['namelsad10']]) for f in polygons_sf.records()]
+  polygon_features = [(f[polygon_fields['GEOID10']], f[polygon_fields['NAMELSAD10']]) for f in polygons_sf.records()]
   polygons = [Polygon(q) for q in polygon_points]
 
   count = -1
@@ -57,6 +57,7 @@ def check_contains1(dp_data):
   for j in idx.intersection(point_coord):
     if point_geom.within(polygons[j]):
       dp_data['polygon_features'] = polygon_features[j]
+      print dp_data
       # update mongo record
       # dp_data['mongodb_conn'].update({"_id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
       return dp_data
@@ -146,7 +147,7 @@ def main():
   idata = []
   for result in conn.get_data():
     dp_data = {}
-    dp_data['mongodb_conn'] = conn
+    #dp_data['mongodb_conn'] = conn
     dp_data['result'] = result
     dp_data['shp_file'] = str(sys.argv[5])
     dp_data['poly_name'] = str(sys.argv[6])
