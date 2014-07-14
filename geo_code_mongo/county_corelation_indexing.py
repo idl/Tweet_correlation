@@ -57,7 +57,7 @@ def check_contains1(dp_data):
   for j in idx.intersection(point_coord):
     if point_geom.within(polygons[j]):
       dp_data['polygon_features'] = polygon_features[j]
-      print dp_data
+      # print dp_data
       # update mongo record
       # dp_data['mongodb_conn'].update({"_id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
       return dp_data
