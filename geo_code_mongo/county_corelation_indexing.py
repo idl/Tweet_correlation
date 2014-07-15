@@ -56,8 +56,11 @@ def check_contains1(dp_data):
   
   for j in idx.intersection(point_coord):
     if point_geom.within(polygons[j]):
-      dp_data['polygon_features'] = polygon_features[j]
-      # print dp_data
+      dp_data['polygon_features'] = {
+        'geoid' : polygon_features[j][0],
+        'name' : polygon_features[j][1],
+      }
+      print dp_data
       # update mongo record
       # dp_data['mongodb_conn'].update({"_id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
       return dp_data
@@ -104,7 +107,14 @@ class mongo_host(object):
                       'id' : doc['id'],
                       'latitude' : doc['geo']['coordinates'][0],
                       'longitude' : doc['geo']['coordinates'][1],
-                      'type' : 'Point'
+                      'type' : 'Point',
+                      'language': doc['lang'],
+                      'user' : {
+                        'id': doc['user']['id'],
+                        'screen_name' : doc['user']['screen_name'],
+                        'location' : doc['user']['location'],
+                        'lang' : doc['user']['lang'],
+                      }
                   }
                   yield result
                 
@@ -115,7 +125,14 @@ class mongo_host(object):
                       'id' : doc['id'],
                       'latitude' : centroid.x,
                       'longitude' : centroid.y,
-                      'type' : 'Polygon'
+                      'type' : 'Polygon',
+                      'language': doc['lang'],
+                      'user' : {
+                        'id': doc['user']['id'],
+                        'screen_name' : doc['user']['screen_name'],
+                        'location' : doc['user']['location'],
+                        'lang' : doc['user']['lang'],
+                      }
                   }
                   yield result
         except:
