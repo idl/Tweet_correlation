@@ -20,6 +20,10 @@ idx = index.Index()
 polygons = []
 polygon_features = []
 
+#insert into mongodb local
+inst_client = MongoClient()
+inst_db = inst_client['twitter']
+inst_coll = inst_db['twitter_geo']
 
 def extract_features(shape_f):
   global idx
@@ -56,11 +60,11 @@ def check_contains1(dp_data):
   
   for j in idx.intersection(point_coord):
     if point_geom.within(polygons[j]):
-      dp_data['polygon_features'] = {
-        'geoid' : polygon_features[j][0],
-        'name' : polygon_features[j][1],
-      }
-      print dp_data
+      dp_data['result']['county_geoid'] = polygon_features[j][0]
+      dp_data['result']['county_name'] = polygon_features[j][1]
+      
+      inst_coll.insert(dp_data['result'])
+      # print dp_data
       # update mongo record
       # dp_data['mongodb_conn'].update({"_id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
       return dp_data
@@ -93,6 +97,8 @@ class mongo_host(object):
         self.collection = self.db[mongo_db['collection']]
         self.query_field = '$' + mongo_db['query_field']
 
+    def total_docs(self):
+        return self.collection.count()
 
     def get_data(self):
         try:
@@ -159,6 +165,8 @@ def main():
 
   pool = Pool(processes=cpu_count())
 
+  total_docs = conn.total_docs()
+
   count = 1
 
   idata = []
@@ -170,7 +178,7 @@ def main():
     dp_data['poly_name'] = str(sys.argv[6])
     idata.append(dp_data)
     count += 1
-    if count % 500 == 0:
+    if count % 30000 == 0 or count == total_docs:
         responses = pool.imap_unordered(check_contains1, idata)
         num_tasks = len(idata)
         start_time = time.time()
@@ -179,6 +187,7 @@ def main():
           if (completed == num_tasks): break
           percent = (float(completed)/float(num_tasks))*100
           print "%.3f" % percent," % complete. ", "Waiting for", num_tasks-completed, "tasks to complete..."
+          print "Docs left: ", total_docs-count
           time.sleep(2)
         idata = []
         end_time = time.time()
