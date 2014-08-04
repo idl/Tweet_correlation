@@ -49,11 +49,8 @@ def extract_features(shape_f):
   print "Shapefile Features Extracted"
 
 def check_contains1(dp_data):
-  # mongo_id = dp_data['result']['id']
   lat = dp_data['result']['latitude']
   lon = dp_data['result']['longitude']
-  # shape_f = dp_data['shp_file']
-  # poly_name = dp_data['poly_name']
 
   point_coord = [float(lon),float(lat)]
   point_geom = Point(float(lon),float(lat))
@@ -62,12 +59,6 @@ def check_contains1(dp_data):
   for j in idx.intersection(point_coord):
     if point_geom.within(polygons[j]):
       dp_data['result']['county_geoid'] = polygon_features[j][0]
-      # dp_data['result']['county_name'] = polygon_features[j][1]
-      
-      # inst_coll.insert(dp_data['result'])
-      # print dp_data
-      # update mongo record
-      # dp_data['mongodb_conn'].update({"_id": dp_data['result']['id']}, {"$set": {"polygon_features": dp_data['polygon_features']}})
       return dp_data['result']
   return None
 
