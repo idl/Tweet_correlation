@@ -179,7 +179,9 @@ def main():
     idata.append(dp_data)
     count += 1
     if count % 30000 == 0 or count == total_docs:
-        responses = pool.imap_unordered(check_contains1, idata)
+        responses = pool.imap(check_contains1, idata)
+        # responses = pool.map(check_contains1, idata)
+
         num_tasks = len(idata)
         start_time = time.time()
         while (True):
@@ -189,10 +191,22 @@ def main():
           print "%.3f" % percent," % complete. ", "Waiting for", num_tasks-completed, "tasks to complete..."
           print "Docs left: ", total_docs-count
           time.sleep(2)
+
+        # ins_mongo = []
+        # for each in responses:
+        #   print each
+        #   # test = json.loads(each)
+        #   # print test
+        #   #ins_mongo.append(each['result'])
+        # ins_count = len(ins_mongo)
+
+        #insert bulk into mongo
+        # inst_coll.insert(ins_mongo)
+
         idata = []
         end_time = time.time()
-        print "total time taken this loop: ", end_time - start_time
-        print "Found and wrote: %d" % count
+        print "\nTotal time taken this loop: ", end_time - start_time
+        print "Found and wrote: %d, %d\n" % count, ins_count
   pool.close()
 
 
